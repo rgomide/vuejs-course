@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import HomeStateView from '../views/HomeStateView.vue'
 import ModalsView from '../views/ModalsView.vue'
 
 const router = createRouter({
@@ -9,6 +10,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView
+    },
+    {
+      path: '/home-state',
+      name: 'home-state',
+      component: HomeStateView
     },
     {
       path: '/posts',
