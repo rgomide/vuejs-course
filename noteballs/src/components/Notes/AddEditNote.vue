@@ -1,8 +1,12 @@
 <template>
-  <div class="card has-background-success-dark p-4 mb-5">
+  <div class="p-4 mb-5" :class="`card has-background-${bgColor}-dark`">
+    <label v-if="label" class="label has-text-white">
+      {{ label }}
+    </label>
     <div class="field">
       <div class="control">
-        <textarea v-model="content" ref="textareaRef" class="textarea" placeholder="Add a new note" />
+        <textarea v-model="content" v-autofocus ref="textareaRef" class="textarea" :placeholder="placeholder"
+          maxlength="100" />
       </div>
     </div>
 
@@ -19,6 +23,7 @@
   imports
 */
 import { ref } from 'vue'
+import { vAutofocus } from '@/directives/vAutofocus'
 /*
   models
 */
@@ -29,7 +34,17 @@ const content = defineModel('content', { required: true })
 */
 
 const props = defineProps({
-
+  bgColor: {
+    type: String,
+    default: 'success'
+  },
+  placeholder: {
+    type: String,
+    default: 'Type something...'
+  },
+  label: {
+    type: String
+  }
 })
 
 /*

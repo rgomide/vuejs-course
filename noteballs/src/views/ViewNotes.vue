@@ -1,6 +1,6 @@
 <template>
   <div class="notes">
-    <AddEditNote v-model:content="newNote" ref="addEditNoteRef">
+    <AddEditNote v-model:content="newNote" placeholder="Add a new note" ref="addEditNoteRef">
       <template #buttons>
         <button @click="addNote" :disabled="!newNote" class="button is-link has-background-success">Add New
           Note</button>
@@ -17,6 +17,7 @@
   imports
 */
 import { ref } from 'vue'
+import { useWatchCharacters } from '@/use/useWatchCharacters'
 import { useStoreNotes } from '@/stores/storeNotes'
 import Note from '@/components/Notes/Note.vue'
 import AddEditNote from '@/components/Notes/AddEditNote.vue'
@@ -39,5 +40,7 @@ const addNote = () => {
 
   addEditNoteRef.value.focusTextarea()
 }
+
+useWatchCharacters(newNote)
 
 </script>
