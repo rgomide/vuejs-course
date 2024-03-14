@@ -1,18 +1,39 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
+import { db } from '@/js/firebase'
+
+import {
+  onSnapshot,
+  query,
+  orderBy,
+  collection,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc
+} from 'firebase/firestore'
+
+import { useStoreAuth } from './storeAuth'
+
+let notesCollectionRef
+let notesQuery
+
+let getNotesSnapshot
+
 export const useStoreNotes = defineStore('storeNotes', () => {
 
-  const notes = ref([
-    {
-      id: 'id1',
-      content: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit. Rem fuga, unde accusantium repellat nulla, voluptas dolor reprehenderit natus ipsum autem deleniti quia odit veniam corporis ducimus distinctio facilis possimus dolorem?'
-    },
-    {
-      id: 'id2',
-      content: 'Shorter note!'
-    }
-  ])
+  const notes = ref([])
+  const notesLoaded = ref(false)
+
+  function init() {
+    const storeAuth = useStoreAuth()
+
+    notesCollectionRef = collection(db, 'users', storeAuth.loggedUser.id, 'notes')
+    notesQuery = query(notesCollectionRef, orderBy('date', 'desc'))
+
+    getNotes()
+  }
 
   const totalOfNotes = computed(() => {
     return notes.value.length
@@ -25,32 +46,69 @@ export const useStoreNotes = defineStore('storeNotes', () => {
       0)
   })
 
+  function clearNotes() {
+    notes.value = []
+    if (getNotesSnapshot) {
+      getNotesSnapshot() // unsubscribe from any active listener
+    }
+  }
+
+  async function getNotes() {
+    getNotesSnapshot = onSnapshot(notesQuery, (querySnapshot) => {
+      const loadedNotes = []
+      querySnapshot.forEach((doc) => {
+        const docData = doc.data()
+
+        const note = {
+          id: doc.id,
+          content: docData.content,
+          date: docData.date
+        }
+
+        loadedNotes.push(note)
+      })
+
+      notes.value = loadedNotes
+      notesLoaded.value = true
+    })
+  }
+
   function getNote(noteId) {
     return notes.value.find(({ id }) => id == noteId)
   }
 
-  function updateNote(updatedNote) {
-    const index = notes.value.findIndex(({ id }) => id == updatedNote.id)
-    if (index >= 0) {
-      notes.value[index] = updatedNote
-    }
+  async function updateNote({ id, content }) {
+    await updateDoc(doc(notesCollectionRef, id), { content })
   }
 
-  function addNote(newNoteContent) {
+  async function addNote(newNoteContent) {
+
     const currentDate = new Date().getTime()
-    const id = currentDate.toString()
+    const date = currentDate.toString()
 
     const note = {
-      id: id,
-      content: newNoteContent
+      content: newNoteContent,
+      date: date
     }
 
-    notes.value.unshift(note)
+    await addDoc(notesCollectionRef, note)
   }
 
-  function deleteNote(noteId) {
-    notes.value = notes.value.filter(({ id }) => id != noteId)
+  async function deleteNote(noteId) {
+    await deleteDoc(doc(notesCollectionRef, noteId))
   }
 
-  return { notes, totalOfNotes, totalOfCharacters, getNote, addNote, updateNote, deleteNote }
+  return {
+    notes,
+    notesLoaded,
+    totalOfNotes,
+    totalOfCharacters,
+    init,
+    clearNotes,
+    getNotes,
+    getNote,
+    addNote,
+    updateNote,
+    deleteNote
+  }
 })
